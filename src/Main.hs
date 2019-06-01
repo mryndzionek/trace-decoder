@@ -43,12 +43,12 @@ commsSplitter bs = bss >>= (mconcat . map S.yield)
     cut (_, leftover) bs' = splitComms (BL.append leftover bs')
 
 packetStream ::
-     MonadAsync m => Cfg -> SerialT m BL.ByteString -> SerialT m Packet
+     MonadAsync m => Cfg -> SerialT m BL.ByteString -> SerialT m String
 packetStream cfg s =
   S.mapM printPacket $
   S.map (parsePacket cfg) (s & commsSplitter & S.mapM debugBuffer)
   where
-    printPacket p = log' (show p) >> return p
+    printPacket p = log' (tail . init $ show p) >> return p
     debugBuffer b = log' ("Raw: " ++ toHex b) >> return b
 
 getSerialParams :: FilePath -> Maybe (String, Integer)
@@ -62,8 +62,7 @@ getSigMap ls =
   let sigRe = mkRegex "ESM_SIGNAL\\((\\w+)\\)"
       idRe = mkRegex "ESM_ID\\((\\w+)\\)"
       find re =
-        V.fromList .
-        fmap (head . fromJust) . filter isJust . fmap (matchRegex re)
+        unique . fmap (head . fromJust) . filter isJust . fmap (matchRegex re)
       sigs = find sigRe ls
       ids = find idRe ls
    in (V.cons "alarms" sigs, V.fromList ["tick", "trace"] V.++ ids)

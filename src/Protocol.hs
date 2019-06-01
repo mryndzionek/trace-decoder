@@ -3,8 +3,7 @@
 {-# LANGUAGE OverloadedStrings     #-}
 
 module Protocol
-  ( Packet
-  , Cfg
+  ( Cfg
   , parsePacket
   ) where
 
@@ -12,7 +11,7 @@ import           Data.Binary.Get
 import           Data.Bits            (complement, xor, (.&.))
 import qualified Data.ByteString.Lazy as BL
 import           Data.List            (intercalate)
-import           Data.Maybe           (fromMaybe)
+import           Data.Maybe           (fromMaybe, listToMaybe)
 import qualified Data.Vector          as V
 import           Data.Word
 
@@ -111,14 +110,18 @@ getReceiveEv :: Cfg -> Get ReceiveEv
 getReceiveEv (sigIds, ids) = do
   i <- getWord8
   s <- getWord8
-  st <- getData
-  return $ ReceiveEv (cfgGet ids i) (cfgGet sigIds s) (read . show . head $ st)
+  st <- getNData 1
+  return $
+    ReceiveEv
+      (cfgGet ids i)
+      (cfgGet sigIds s)
+      (read . show $ fromMaybe "???" $ listToMaybe st)
 
 getTransitionEv :: Cfg -> Get TransitionEv
 getTransitionEv (sigIds, ids) = do
   i <- getWord8
   s <- getWord8
-  (st:ns:_) <- read . show <$> getData
+  (st:ns:_) <- read . show <$> getNData 2
   return $ TransitionEv (cfgGet ids i) st (cfgGet sigIds s) ns
 
 getEvType :: Cfg -> Word8 -> Get (Maybe EvType)
@@ -134,7 +137,10 @@ getPacket cfg crc = do
   h <- getHeader
   len <- getWord8
   b <- getLazyByteString $ fromIntegral (len - 1)
-  let et = runGet (getEvType cfg (_uid h)) b
+  let et =
+        case runGetOrFail (getEvType cfg (_uid h)) b of
+          Right (_, _, me) -> me
+          _                -> Nothing
   crc' <- getWord8
   return $ Packet h len (Payload et b) crc' (crc == crc')
 
@@ -143,6 +149,9 @@ getData =
   many $ do
     len <- getWord8
     getLazyByteString $ fromIntegral len
+
+getNData :: Int -> Get [BL.ByteString]
+getNData n = fmap (take n) getData
 
 unescape :: BL.ByteString -> BL.ByteString
 unescape bl = fst $ BL.foldl' go (BL.empty, False) bl
@@ -155,6 +164,11 @@ unescape bl = fst $ BL.foldl' go (BL.empty, False) bl
 checksum :: BL.ByteString -> Word8
 checksum bs = 0xFF .&. complement (BL.foldl1' (+) bs)
 
-parsePacket :: Cfg -> BL.ByteString -> Packet
-parsePacket cfg =
-  (\b -> runGet (getPacket cfg (checksum (BL.init b))) b) . unescape
+parsePacket :: Cfg -> BL.ByteString -> String
+parsePacket cfg b =
+  let b' = unescape b
+      go = getPacket cfg (checksum (BL.init b'))
+   in case runGetOrFail go b' of
+        Right (_, _, p) -> show p
+        Left (bs, o, err) ->
+          "Error: " ++ err ++ " in " ++ toHex bs ++ " at " ++ show o
