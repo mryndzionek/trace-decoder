@@ -8,8 +8,12 @@ import qualified Data.ByteString.Lazy       as BL
 import           Data.Function              ((&))
 import           Data.Maybe                 (fromJust, isJust)
 import           Data.Semigroup             (cycle1)
+import           Data.Char                  (isSpace)
+import           Data.List.Split            (splitWhen)
+
 import qualified Data.Vector                as V
 
+import           Control.Monad              ((>=>))
 import           Control.Monad.IO.Class
 
 import           System.Environment
@@ -70,7 +74,7 @@ getSigMap ls =
 main :: IO ()
 main = do
   (isSerial, mapFp, path) <- getArgs >>= getOpts
-  cfg <- getSigMap . lines <$> readFile mapFp
+  cfg <- getSigMap . (splitWhen isSpace >=> lines) <$> readFile mapFp
   if isSerial
     then case getSerialParams path of
            Just sp -> do
