@@ -11,3 +11,14 @@ Here are the reasons:
  - strong static typing is very important for codebases that
 	grow/change a lot (most code used for testing)
  - many modules available and easy C/C++ interoperability
+
+There is a `default.nix` file provided for builiding with [static-haskell-nix](https://github.com/nh2/static-haskell-nix)
+(Nix needs to be installed).
+
+```sh
+$(nix-build --no-link -A fullBuildScript)
+```
+
+:warning: The compilation from scratch takes hours. On a `i3-4330 CPU @ 3.50GHz` it took around 7h.
+
+Compiled binaries can be found in `releases` section.

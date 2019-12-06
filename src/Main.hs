@@ -34,7 +34,7 @@ serialStream sp =
   cycle1 $ liftIO $ BL.fromStrict <$> recv sp (2 * 32 + 2)
 
 fileStream :: MonadIO m => FilePath -> SerialT m BL.ByteString
-fileStream fp = S.filter (not . BL.null) $ cycle1 $ liftIO $ BL.readFile fp
+fileStream fp = S.filter (not . BL.null) $ liftIO $ BL.readFile fp
 
 splitComms :: BL.ByteString -> ([BL.ByteString], BL.ByteString)
 splitComms xs
