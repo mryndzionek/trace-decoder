@@ -45,4 +45,4 @@ getOpts argv =
       ioError (userError (concat errs ++ usageInfo header options))
   where
     header =
-      "Usage: proto-decoder [OPTION...] path to file or serial port identifier"
+      "Usage: trace-decoder [OPTION...] path to file or serial port identifier"
