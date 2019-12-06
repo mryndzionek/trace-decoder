@@ -33,6 +33,9 @@ serialStream sp =
   S.filter (not . BL.null) $
   cycle1 $ liftIO $ BL.fromStrict <$> recv sp (2 * 32 + 2)
 
+fileStream :: MonadIO m => FilePath -> SerialT m BL.ByteString
+fileStream fp = S.filter (not . BL.null) $ cycle1 $ liftIO $ BL.readFile fp
+
 splitComms :: BL.ByteString -> ([BL.ByteString], BL.ByteString)
 splitComms xs
   | BL.null xs = ([], BL.empty)
@@ -75,11 +78,12 @@ main :: IO ()
 main = do
   (isSerial, mapFp, path) <- getArgs >>= getOpts
   cfg <- getSigMap . (splitWhen isSpace >=> lines) <$> readFile mapFp
+  let run = runStream . packetStream cfg
   if isSerial
     then case getSerialParams path of
            Just sp -> do
              sp' <- uncurry serialOpen sp
-             runStream $ packetStream cfg $ serialStream sp'
+             run $ serialStream sp'
              closeSerial sp'
            Nothing -> putStrLn $ "Wrong serial port format: " ++ path
-    else putStrLn "File stream not supported yet"
+    else run $ fileStream path
