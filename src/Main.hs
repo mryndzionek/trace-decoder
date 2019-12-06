@@ -13,7 +13,7 @@ import           Data.List.Split            (splitWhen)
 
 import qualified Data.Vector                as V
 
-import           Control.Monad              ((>=>))
+import           Control.Monad              ((>=>), when)
 import           Control.Monad.IO.Class
 
 import           System.Environment
@@ -50,13 +50,13 @@ commsSplitter bs = bss >>= (mconcat . map S.yield)
     cut (_, leftover) bs' = splitComms (BL.append leftover bs')
 
 packetStream ::
-     MonadAsync m => Cfg -> SerialT m BL.ByteString -> SerialT m String
-packetStream cfg s =
+     MonadAsync m => Bool -> Cfg -> SerialT m BL.ByteString -> SerialT m String
+packetStream d cfg s =
   S.mapM printPacket $
   S.map (parsePacket cfg) (s & commsSplitter & S.mapM debugBuffer)
   where
     printPacket p = log' (tail . init $ show p) >> return p
-    debugBuffer b = log' ("Raw: " ++ toHex b) >> return b
+    debugBuffer b = when d (log' ("Raw: " ++ toHex b)) >> return b
 
 getSerialParams :: FilePath -> Maybe (String, Integer)
 getSerialParams fp =
@@ -76,9 +76,9 @@ getSigMap ls =
 
 main :: IO ()
 main = do
-  (isSerial, mapFp, path) <- getArgs >>= getOpts
+  (debug, isSerial, mapFp, path) <- getArgs >>= getOpts
   cfg <- getSigMap . (splitWhen isSpace >=> lines) <$> readFile mapFp
-  let run = runStream . packetStream cfg
+  let run = runStream . packetStream debug cfg
   if isSerial
     then case getSerialParams path of
            Just sp -> do

@@ -21,22 +21,23 @@ options =
 inp :: String -> Flag
 inp = IsSerial . (== "serial")
 
-process :: [String] -> [Flag] -> (Bool, FilePath, String)
+process :: [String] -> [Flag] -> (Bool, Bool, FilePath, String)
 process ps fs =
   ( x
   , y
+  , z
   , if null ps
       then "/dev/ttyUSB0:576000:8N1"
       else head ps)
   where
-    (x, y) = foldl' go (True, "") fs
-    go (i, m) b =
+    (x, y, z) = foldl' go (False, True, "") fs
+    go (d, i, m) b =
       case b of
-        IsSerial a -> (a, m)
-        Map fp     -> (i, fp)
-        _          -> (i, m)
+        IsSerial a -> (d, a, m)
+        Map fp     -> (d, i, fp)
+        Debug      -> (True, i, m)
 
-getOpts :: [String] -> IO (Bool, FilePath, String)
+getOpts :: [String] -> IO (Bool, Bool, FilePath, String)
 getOpts argv =
   case getOpt Permute options argv of
     (o, n, []) -> return $ process n o
