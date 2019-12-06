@@ -5,15 +5,15 @@
 module Main where
 
 import qualified Data.ByteString.Lazy       as BL
+import           Data.Char                  (isSpace)
 import           Data.Function              ((&))
+import           Data.List.Split            (splitWhen)
 import           Data.Maybe                 (fromJust, isJust)
 import           Data.Semigroup             (cycle1)
-import           Data.Char                  (isSpace)
-import           Data.List.Split            (splitWhen)
 
 import qualified Data.Vector                as V
 
-import           Control.Monad              ((>=>), when)
+import           Control.Monad              (when, (>=>))
 import           Control.Monad.IO.Class
 
 import           System.Environment
