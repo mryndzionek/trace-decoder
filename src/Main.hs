@@ -4,6 +4,7 @@
 
 module Main where
 
+import qualified Data.ByteString            as B
 import qualified Data.ByteString.Lazy       as BL
 import           Data.Char                  (isSpace)
 import           Data.Function              ((&))
@@ -28,10 +29,11 @@ import           Opts
 import           Protocol
 import           Util
 
+
 serialStream :: MonadIO m => SerialPort -> SerialT m BL.ByteString
 serialStream sp =
   S.filter (not . BL.null) $
-  cycle1 $ liftIO $ BL.fromStrict <$> recv sp (2 * 32 + 2)
+  cycle1 $ liftIO $ BL.fromStrict <$> (send sp B.empty >> recv sp (2 * 32 + 2))
 
 fileStream :: MonadIO m => FilePath -> SerialT m BL.ByteString
 fileStream fp = S.filter (not . BL.null) $ liftIO $ BL.readFile fp
