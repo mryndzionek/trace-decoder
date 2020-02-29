@@ -13,6 +13,14 @@ jobs:
       run: |
         sudo apt-get update
 
+    - name: Free Space
+      run: |
+        sudo swapoff -a
+        sudo rm -f /swapfile
+        sudo apt clean
+        docker rmi $(docker image ls -aq)
+        df -h
+
     - uses: actions/checkout@v1
     - uses: cachix/install-nix-action@v6
     - run: |
