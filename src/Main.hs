@@ -80,7 +80,7 @@ main :: IO ()
 main = do
   (debug, isSerial, mapFp, path) <- getArgs >>= getOpts
   cfg <- getSigMap . (splitWhen isSpace >=> lines) <$> readFile mapFp
-  let run = runStream . packetStream debug cfg
+  let run = S.drain . packetStream debug cfg
   if isSerial
     then case getSerialParams path of
            Just sp -> do

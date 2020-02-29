@@ -39,9 +39,9 @@ packages:
 # using the same syntax as the packages field.
 # (e.g., acme-missiles-0.3)
 extra-deps:
-- serialport-0.4.7
-- streamly-0.6.1
-- list-grouping-0.1.1
+- streamly-0.7.1
+- serialport-0.4.7@sha256:faff483f73c8e8e9661dae3788795bb0f4a38413a49fccb77bcdc6827af50182,1430
+- fusion-plugin-types-0.1.0@sha256:0f11bbc445ab8ae3dbbb3d5d2ea198bdb1ac020518b7f4f7579035dc89182438,1506
 
 # Override default flag values for local packages and extra-deps
 # flags: {}
